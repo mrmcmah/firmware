@@ -26,16 +26,16 @@
 
 // MAX-M10S via the JP4 shunts. GPS_INT (IO17, EXTINT) is unused.
 #define HAS_GPS 1
-#define GPS_RX_PIN 7 // GPS_TXO
-#define GPS_TX_PIN 8 // GPS_RXI
-#define PIN_GPS_PPS 16
-#define PIN_GPS_RESET 18
+#define GPS_RX_PIN 15 // GPS_TXO
+#define GPS_TX_PIN 16 // GPS_RXI
+#define PIN_GPS_PPS 7
+#define PIN_GPS_RESET 5
 #define GPS_RESET_MODE LOW
 #define GPS_THREAD_INTERVAL 50
 
 // J6 sensor header
-#define I2C_SDA 5
-#define I2C_SCL 6
+#define I2C_SDA 42
+#define I2C_SCL 41
 
 // UART0's pins carry LoRa SPI on this board, so UART0 must stay unused.
 #define UART_TX 43
@@ -44,13 +44,12 @@
 // Wio-SX1262 (U6)
 #define USE_SX1262
 
-#define LORA_MISO 43
-#define LORA_SCK 44
-#define LORA_MOSI 9
-#define LORA_CS 41
-
-#define LORA_RESET 42
-#define LORA_DIO1 39
+#define LORA_MISO 13
+#define LORA_SCK 12
+#define LORA_MOSI 11
+#define LORA_CS 10
+#define LORA_RESET 14
+#define LORA_DIO1 21
 
 #ifdef USE_SX1262
 #define SX126X_CS LORA_CS
