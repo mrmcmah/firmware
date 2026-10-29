@@ -73,6 +73,11 @@ int32_t DetectionSensorModule::runOnce()
 
         // This is the first time the OSThread library has called this function, so do some setup
         firstTime = false;
+#ifdef DETECTION_SENSOR_PIN
+        // No pin configured: use the board's (variant.h)
+        if (moduleConfig.detection_sensor.monitor_pin == 0)
+            moduleConfig.detection_sensor.monitor_pin = DETECTION_SENSOR_PIN;
+#endif
         if (moduleConfig.detection_sensor.monitor_pin > 0) {
             pinMode(moduleConfig.detection_sensor.monitor_pin, moduleConfig.detection_sensor.use_pullup ? INPUT_PULLUP : INPUT);
         } else {
