@@ -26,7 +26,7 @@
 // CHG_STAT: BQ25171 STAT2 via R2 (1k), pulled low while charging.
 // CHG_FAULT (BQ25171 STAT1) is on IO17, unused by the firmware.
 #define EXT_CHRG_DETECT 9
-#define EXT_CHRG_DETECT_VALUE LOW
+#define EXT_CHRG_DETECT_VALUE LOW   
 
 // MAX-M10S via the JP4 shunts. GPS_INT (IO6, EXTINT) is unused.
 #define HAS_GPS 1
