@@ -6,6 +6,9 @@
 #include "configuration.h"
 #include "main.h"
 #include <Throttle.h>
+#ifdef ARCH_ESP32
+#include <driver/gpio.h>
+#endif
 DetectionSensorModule *detectionSensorModule;
 
 #define GPIO_POLLING_INTERVAL 100
@@ -85,17 +88,29 @@ int32_t DetectionSensorModule::runOnce()
             return disable();
         }
         LOG_INFO("Detection Sensor Module: init");
+#ifdef ARCH_ESP32
+        lsObserver.observe(&notifyLightSleep);
+        lsEndObserver.observe(&notifyLightSleepEnd);
+#endif
 
         return setStartDelay();
     }
 
     // LOG_DEBUG("Detection Sensor Module: Current pin state: %i", digitalRead(moduleConfig.detection_sensor.monitor_pin));
 
+    bool wokeByPress = false;
+#ifdef ARCH_ESP32
+    wokeByPress = wokeByDetection;
+    wokeByDetection = false;
+#endif
     if (!Throttle::isWithinTimespanMs(lastSentToMesh,
                                       Default::getConfiguredOrDefaultMs(moduleConfig.detection_sensor.minimum_broadcast_secs))) {
         bool isDetected = hasDetectionEvent();
         DetectionSensorTriggerVerdict verdict =
             handlers[moduleConfig.detection_sensor.detection_trigger_type](wasDetected, isDetected);
+        // The press that woke us may already be released by now
+        if (wokeByPress)
+            verdict = DetectionSensorVerdictDetected;
         wasDetected = isDetected;
         switch (verdict) {
         case DetectionSensorVerdictDetected:
@@ -167,3 +182,31 @@ bool DetectionSensorModule::hasDetectionEvent()
     // LOG_DEBUG("Detection Sensor Module: Current state: %i", currentState);
     return (moduleConfig.detection_sensor.detection_trigger_type & 1) ? currentState : !currentState;
 }
+
+#ifdef ARCH_ESP32
+int DetectionSensorModule::beforeLightSleep(void *unused)
+{
+    // Skip while active (held), or it would wake the CPU straight back up
+    if (moduleConfig.detection_sensor.monitor_pin == 0 || hasDetectionEvent())
+        return 0;
+    gpio_num_t pin = (gpio_num_t)moduleConfig.detection_sensor.monitor_pin;
+    bool activeHigh = moduleConfig.detection_sensor.detection_trigger_type & 1;
+    if (moduleConfig.detection_sensor.use_pullup)
+        gpio_pullup_en(pin);
+    gpio_wakeup_enable(pin, activeHigh ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL);
+    return 0;
+}
+
+int DetectionSensorModule::afterLightSleep(esp_sleep_wakeup_cause_t cause)
+{
+    if (moduleConfig.detection_sensor.monitor_pin == 0)
+        return 0;
+    gpio_wakeup_disable((gpio_num_t)moduleConfig.detection_sensor.monitor_pin);
+    // A LoRa packet also wakes on GPIO, so check the pin itself
+    if (cause == ESP_SLEEP_WAKEUP_GPIO && !wasDetected && hasDetectionEvent()) {
+        wokeByDetection = true;
+        setIntervalFromNow(0);
+    }
+    return 0;
+}
+#endif

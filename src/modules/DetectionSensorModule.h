@@ -1,5 +1,8 @@
 #pragma once
 #include "SinglePortModule.h"
+#ifdef ARCH_ESP32
+#include "sleep.h"
+#endif
 
 class DetectionSensorModule : public SinglePortModule, private concurrency::OSThread
 {
@@ -18,6 +21,17 @@ class DetectionSensorModule : public SinglePortModule, private concurrency::OSTh
     void sendDetectionMessage();
     void sendCurrentStateMessage(bool state);
     bool hasDetectionEvent();
+
+#ifdef ARCH_ESP32
+    // Wildfire Mesh: the monitor pin wakes the CPU from light sleep, so a short press isn't missed
+    bool wokeByDetection = false;
+    int beforeLightSleep(void *unused);
+    int afterLightSleep(esp_sleep_wakeup_cause_t cause);
+    CallbackObserver<DetectionSensorModule, void *> lsObserver =
+        CallbackObserver<DetectionSensorModule, void *>(this, &DetectionSensorModule::beforeLightSleep);
+    CallbackObserver<DetectionSensorModule, esp_sleep_wakeup_cause_t> lsEndObserver =
+        CallbackObserver<DetectionSensorModule, esp_sleep_wakeup_cause_t>(this, &DetectionSensorModule::afterLightSleep);
+#endif
 };
 
 extern DetectionSensorModule *detectionSensorModule;
