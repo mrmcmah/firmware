@@ -798,7 +798,6 @@ void NodeDB::installDefaultConfig(bool preserveKey = false)
 
     initConfigIntervals();
     variantDefaultConfig();
-    variantDefaultModuleConfig();
 }
 
 void NodeDB::initConfigIntervals()
@@ -944,6 +943,7 @@ void NodeDB::installDefaultModuleConfig()
     moduleConfig.ambient_lighting.blue = myNodeInfo.my_node_num & 0x0000FF;
 
     initModuleConfigIntervals();
+    variantDefaultModuleConfig();
 }
 
 void NodeDB::installRoleDefaults(meshtastic_Config_DeviceConfig_Role role)

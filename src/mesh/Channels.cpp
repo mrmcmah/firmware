@@ -9,6 +9,11 @@
 
 #include <assert.h>
 
+// Weak empty variant hook, run after the default channels and LoRa settings are
+// installed. May be redefined by variant files.
+void variantDefaultChannels() __attribute__((weak));
+void variantDefaultChannels() {}
+
 #if !MESHTASTIC_EXCLUDE_MQTT
 #include "mqtt/MQTT.h"
 #endif
@@ -284,6 +289,7 @@ void Channels::initDefaults()
 #else
     initDefaultChannel(0);
 #endif
+    variantDefaultChannels();
 }
 
 void Channels::onConfigChanged()
